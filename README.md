@@ -1,1 +1,2 @@
-# CBS_course
+# PA_course
+Material for PA course

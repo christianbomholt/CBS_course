@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>R Course CBS</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Christian Bomholt" />
+    <meta name="date" content="2019-02-14" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <script src="libs/htmlwidgets/htmlwidgets.js"></script>
+    <script src="libs/jquery/jquery.min.js"></script>
+    <link href="libs/datatables-css/datatables-crosstalk.css" rel="stylesheet" />
+    <script src="libs/datatables-binding/datatables.js"></script>
+    <link href="libs/dt-core/css/jquery.dataTables.min.css" rel="stylesheet" />
+    <link href="libs/dt-core/css/jquery.dataTables.extra.css" rel="stylesheet" />
+    <script src="libs/dt-core/js/jquery.dataTables.min.js"></script>
+    <link href="libs/crosstalk/css/crosstalk.css" rel="stylesheet" />
+    <script src="libs/crosstalk/js/crosstalk.min.js"></script>
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# R Course CBS <img src="/home/christian/R/CBS_course/img/PA.png" height="60" width="60">
+## </br> Importing data from flat-files
+### Christian Bomholt
+### 2019-02-14
+
+---
+
+
+
+
+
+
+---
+
+background-image: url("./../img/PA.png")
+background-size: 150px
+background-position: 90% 8%
+
+# Data Import
+
+- Indlæsning af standard fil-formater
+  - .xlsx
+  - .csv
+- Performance optimerede fil-formater
+
+
+### Motivation:
+
+Man kan spare meget tid ved at bruge en smule ekstra energi på indlæsningen af data, fremfor blindt at indlæse data og derefter bruge kræfter på rensning af data.
+
+---
+
+class: inverse, middle
+
+#  Indlæsning af standard fil-formater
+
+---
+
+# .xlsx filer
+
+Vi bruger pakken `readxl` til indlæsning af `.xlsx`. Pakken indeholder en række eksempler som kan benyttes til at teste funktionalitet med.
+
+
+```r
+library(readxl)
+readxl_example()
+```
+
+```
+##  [1] "clippy.xls"    "clippy.xlsx"   "datasets.xls"  "datasets.xlsx"
+##  [5] "deaths.xls"    "deaths.xlsx"   "geometry.xls"  "geometry.xlsx"
+##  [9] "type-me.xls"   "type-me.xlsx"
+```
+
+
+
+```r
+#system(paste("xdg-open",readxl_example("datasets.xlsx")))
+readxl_example("datasets.xlsx")
+```
+
+---
+
+Vi indlæser dataen med `read_excel()`
+
+
+```r
+read_excel(path, sheet = NULL, range = NULL, col_names = TRUE,
+  col_types = NULL, na = "", trim_ws = TRUE, skip = 0, n_max = Inf,
+  guess_max = min(1000, n_max))
+```
+
+
+```r
+xlsx_example &lt;- readxl_example("datasets.xlsx")
+read_excel(xlsx_example) %&gt;% shower()
+```
+
+<div id="htmlwidget-4919d1c4fa89ccec8d77" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-4919d1c4fa89ccec8d77">{"x":{"filter":"none","data":[[5.1,4.9,4.7,4.6,5],[3.5,3,3.2,3.1,3.6],[1.4,1.4,1.3,1.5,1.4],[0.2,0.2,0.2,0.2,0.2],["setosa","setosa","setosa","setosa","setosa"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Sepal.Length<\/th>\n      <th>Sepal.Width<\/th>\n      <th>Petal.Length<\/th>\n      <th>Petal.Width<\/th>\n      <th>Species<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[0,1,2,3]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+
+---
+
+# Sheet specifikation
+
+Det er muligt at specificerer hvilket `sheet` man ønsker
+
+
+```r
+excel_sheets(xlsx_example)
+```
+
+```
+## [1] "iris"     "mtcars"   "chickwts" "quakes"
+```
+
+
+```r
+read_excel(xlsx_example, sheet = "chickwts")  %&gt;% shower()
+```
+
+<div id="htmlwidget-a26fa20119a687ccfd32" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-a26fa20119a687ccfd32">{"x":{"filter":"none","data":[[179,160,136,227,217],["horsebean","horsebean","horsebean","horsebean","horsebean"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>weight<\/th>\n      <th>feed<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":0}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+---
+
+# Subsetting options
+
+Der er flere muligheder for at subsette data under import, dette er performance fremmende 
+
+
+```r
+read_excel(xlsx_example, n_max = 2)  %&gt;% shower()
+```
+
+<div id="htmlwidget-39842437d6b172af2325" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-39842437d6b172af2325">{"x":{"filter":"none","data":[[5.1,4.9],[3.5,3],[1.4,1.4],[0.2,0.2],["setosa","setosa"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Sepal.Length<\/th>\n      <th>Sepal.Width<\/th>\n      <th>Petal.Length<\/th>\n      <th>Petal.Width<\/th>\n      <th>Species<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[0,1,2,3]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+
+```r
+read_excel(xlsx_example, range = "C1:E3")  %&gt;% shower()
+```
+
+<div id="htmlwidget-ee3fa26eb07428fcf0c8" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-ee3fa26eb07428fcf0c8">{"x":{"filter":"none","data":[[1.4,1.4],[0.2,0.2],["setosa","setosa"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Petal.Length<\/th>\n      <th>Petal.Width<\/th>\n      <th>Species<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[0,1]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+---
+
+# Subsetting options
+
+
+```r
+read_excel(xlsx_example, range = cell_rows(1:2)) %&gt;% shower
+```
+
+<div id="htmlwidget-10d68120a2d6c9263b70" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-10d68120a2d6c9263b70">{"x":{"filter":"none","data":[[5.1],[3.5],[1.4],[0.2],["setosa"]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Sepal.Length<\/th>\n      <th>Sepal.Width<\/th>\n      <th>Petal.Length<\/th>\n      <th>Petal.Width<\/th>\n      <th>Species<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[0,1,2,3]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+Yderligere kan man subsette med
+
+
+```r
+read_excel(xlsx_example, range = cell_cols("B:D"))
+read_excel(xlsx_example, range = "mtcars!B1:D5")
+```
+
+
+
+---
+
+# Na håndtering
+
+Det kan være vigtigt at have ens `NULL` værdier korrekt encoded, da mange pakker har intelligent håndtering af disse. Det kan gøres ved
+
+
+```r
+df &lt;- read_excel(xlsx_example)
+df[df=="setosa"] &lt;- NA
+```
+
+eller
+
+
+```r
+read_excel(xlsx_example, na = "setosa") %&gt;% shower
+```
+
+<div id="htmlwidget-ad6125f859359440a4fd" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-ad6125f859359440a4fd">{"x":{"filter":"none","data":[[5.1,4.9,4.7,4.6,5],[3.5,3,3.2,3.1,3.6],[1.4,1.4,1.3,1.5,1.4],[0.2,0.2,0.2,0.2,0.2],[null,null,null,null,null]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>Sepal.Length<\/th>\n      <th>Sepal.Width<\/th>\n      <th>Petal.Length<\/th>\n      <th>Petal.Width<\/th>\n      <th>Species<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[0,1,2,3]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+---
+
+# Write to .xlsx
+
+Dette kan gøres med pakken `openxlsx`
+
+Her konstrueres en `list()` hvor hvert navn i listen bliver et `sheet` i den endelige excel fil.
+
+
+
+```r
+l &lt;- list(iris = iris, mtcars = mtcars, chickwts = chickwts, quakes = quakes)
+openxlsx::write.xlsx(l, file = "inst/extdata/datasets.xlsx")
+```
+
+
+---
+
+class: inverse, middle
+  
+#  Lille opgave
+
+---
+
+## Opgave
+
+- Forsøg at anvende nogle af disse teknikker på filen `"../data/xl/haver.xlsx"` 
+- Bemærk det sære dato format samt `NA` værdierne. 
+
+
+```r
+read_excel("../data/xl/haver.xlsx") %&gt;% shower
+```
+
+
+
+---
+
+class: inverse, middle
+
+#  CSV
+
+---
+
+Vi bruger pakken `readr` til indlæsning af `.csv` som indeholdder funktionen `read_csv()`. Man kan også bruge `base` funktionen `read.csv()`, men der er følgende grunde til at bruge `readr` istedet.
+
+### `readr`:
+- er typisk meget hurtigere  `(~10x)`  end `base`. Ved store filer får man en progress bar så man kan holde øje med fremskridt.
+
+- konverterer ikke `characters` til `factors`, samt har nogle fornuftige default indstillinger ifht. søjler og rækker.
+
+- er reproducérbar, `read.csv()` fra `base` er afhængig af miljøvariable og kører derfor ikke éns fra linux maskine til windows/mac maskine. 
+
+
+---
+## readr
+
+Pakken tager en `file-path` som første argument.
+
+
+```r
+library(readr)
+read_csv("../data/airports.csv") %&gt;% shower
+```
+
+<div id="htmlwidget-ec8192fe4947ed15e594" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-ec8192fe4947ed15e594">{"x":{"filter":"none","data":[["00M","00R","00V","01G","01J"],["Thigpen","Livingston Municipal","Meadow Lake","Perry-Warsaw","Hilliard Airpark"],["Bay Springs","Livingston","Colorado Springs","Perry","Hilliard"],["MS","TX","CO","NY","FL"],["USA","USA","USA","USA","USA"],[31.95376472,30.68586111,38.94574889,42.74134667,30.6880125],[-89.23450472,-95.01792778,-104.5698933,-78.05208056,-81.90594389]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>iata<\/th>\n      <th>airport<\/th>\n      <th>city<\/th>\n      <th>state<\/th>\n      <th>country<\/th>\n      <th>lat<\/th>\n      <th>long<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[5,6]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+
+---
+
+#### `read_csv` funktionalitet
+
+Man kan bruge pakken `readr` til at kreere en `data.frame` fra en `string`
+
+
+```r
+read_csv("a,b,c
+1,2,3
+4,5,6") %&gt;% shower
+```
+
+<div id="htmlwidget-a20309dceeaac64121be" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-a20309dceeaac64121be">{"x":{"filter":"none","data":[[1,4],[2,5],[3,6]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>a<\/th>\n      <th>b<\/th>\n      <th>c<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[0,1,2]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+
+---
+
+#### `read_csv` funktionalitet
+
+
+Dette vil vi bruge til at demonstrere `read_csv`'s features. Du kan bruge `skip=n` til at skippe de første `n` linjer.
+
+
+```r
+read_csv("første linje med metadata
+  anden linje med metadata
+  x,y,z
+  1,2,3", skip = 2) %&gt;% shower
+```
+
+<div id="htmlwidget-328fe3f1ea45bc1864aa" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-328fe3f1ea45bc1864aa">{"x":{"filter":"none","data":[[1],[2],[3]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>x<\/th>\n      <th>y<\/th>\n      <th>z<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[0,1,2]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+Eller hvis din fil indeholder kommentarer, kan man supplere `comment = "#"` hvis kommentarerne er markeret memd `#`
+
+
+```r
+read_csv("# A comment I want to skip
+  x,y,z
+  1,2,3", comment = "#") %&gt;% shower
+```
+
+<div id="htmlwidget-035f0489d22bc620453e" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-035f0489d22bc620453e">{"x":{"filter":"none","data":[[1],[2],[3]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>x<\/th>\n      <th>y<\/th>\n      <th>z<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[0,1,2]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+---
+
+### `read_csv` funktionalitet: Søjle navne
+
+Vi kan sætte `col_names = FALSE` hvis vores fil ikke indeholder brugbare søjlenavne.
+
+
+```r
+read_csv("1,2,3\n4,5,6", col_names = FALSE) %&gt;% shower
+```
+
+<div id="htmlwidget-3a60f4c7ad4d155d79e6" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3a60f4c7ad4d155d79e6">{"x":{"filter":"none","data":[[1,4],[2,5],[3,6]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>X1<\/th>\n      <th>X2<\/th>\n      <th>X3<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[0,1,2]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+---
+
+### `read_csv` funktionalitet: Søjle navne
+
+Endvidere kan vi specificere søjlenavne `col_names=c("søjle1","søjle2")` 
+
+
+```r
+read_csv("1,2,3\n4,5,6", col_names = c("x", "y", "z")) %&gt;% shower
+```
+
+<div id="htmlwidget-a41baa283b520a792c14" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-a41baa283b520a792c14">{"x":{"filter":"none","data":[[1,4],[2,5],[3,6]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>x<\/th>\n      <th>y<\/th>\n      <th>z<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[0,1,2]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+---
+
+### `readr` funktionalitet
+
+Vi kan igen vælge at håndtere `NA` værdier allerede ved import, dette gøres ved `na = "#NA-representation"`.
+
+
+```r
+read_csv("a,b,c\n1,2,.", na = ".") %&gt;% shower
+```
+
+<div id="htmlwidget-829e8060b5e745094982" style="width:100%;height:auto;" class="datatables html-widget"></div>
+<script type="application/json" data-for="htmlwidget-829e8060b5e745094982">{"x":{"filter":"none","data":[[1],[2],[null]],"container":"<table class=\"display\">\n  <thead>\n    <tr>\n      <th>a<\/th>\n      <th>b<\/th>\n      <th>c<\/th>\n    <\/tr>\n  <\/thead>\n<\/table>","options":{"dom":"t","columnDefs":[{"className":"dt-right","targets":[0,1]}],"order":[],"autoWidth":false,"orderClasses":false}},"evals":[],"jsHooks":[]}</script>
+
+---
+
+# Avanceret funktionalitet: data-skema
+
+`read_csv()` bruger som standard de første `1000` rækker til at gætte typen af data i hver søjle. Men nogle gange er det ikke nok som set i nedenstående eksempel.
+
+
+```r
+read_csv(readr_example("challenge.csv"))[c(1:2,1999:2000),] 
+```
+
+```
+## # A tibble: 4 x 2
+##          x y    
+##      &lt;dbl&gt; &lt;lgl&gt;
+## 1  404     NA   
+## 2 4172     NA   
+## 3    0.270 NA   
+## 4    0.608 NA
+```
+
+---
+
+# Avanceret funktionalitet: data-skema
+
+
+Her er vi nød til at hjælpe `read_csv()` på vej ved at specificere `col_types`  
+
+
+```r
+read_csv(
+  readr_example("challenge.csv"), 
+  col_types = cols(
+    x = col_double(),
+    y = col_character()
+  )
+)[c(1:2,1999:2000),]  
+```
+
+```
+## # A tibble: 4 x 2
+##          x y         
+##      &lt;dbl&gt; &lt;chr&gt;     
+## 1  404     &lt;NA&gt;      
+## 2 4172     &lt;NA&gt;      
+## 3    0.270 2020-02-04
+## 4    0.608 2019-01-06
+```
+
+---
+
+# Avanceret funktionalitet: data-skema
+
+
+Dette hjælper søjlen `x` men `y` kan også hælpes på vej ved at caste til dates:
+
+
+```r
+read_csv(
+  readr_example("challenge.csv"), 
+  col_types = cols(
+    x = col_double(),
+    y = col_date()
+  )
+)[c(1:2,1999:2000),] 
+```
+
+```
+## # A tibble: 4 x 2
+##          x y         
+##      &lt;dbl&gt; &lt;date&gt;    
+## 1  404     NA        
+## 2 4172     NA        
+## 3    0.270 2020-02-04
+## 4    0.608 2019-01-06
+```
+
+---
+
+class: inverse, middle
+
+#  Opgave
+
+---
+
+## Opgave
+
+- Forsøg at anvende nogle af disse teknikker på filen `"../data/exercise.csv"` 
+
+
+```r
+path &lt;- "../data/exercise.csv"
+data &lt;- read_csv(path)
+```
+
+- Bonus prøv 
+
+
+```r
+path &lt;- "../data/exercise_2.csv"
+```
+
+
+---
+
+class: inverse, middle
+
+#  Performance optimerede fil-formater
+
+---
+
+## Performance optimerede fil-formater
+
+"Binary formats would be much faster than the csv format, because csv takes more space on disk, is row based, uncompressed and needs to be parsed into a computer-native format to have any meaning. So any serializer that’s working on csv has an enormous disadvantage as compared to binary formats."
+
+src: http://www.fstpackage.org/
+
+
+```r
+library(feather)
+library(data.table)
+library(fst)
+library(readr)
+```
+
+Vi forsøger at sammenligne de bedste options til performance I/O.
+
+---
+
+Syntaxen er dejlig ens for alle disse
+
+
+```r
+# fst
+fstwrite &lt;- timer(write.fst(df, "dataset.fst"))
+fstread  &lt;- timer(read.fst("dataset.fst"))
+
+#fread
+dtwrite &lt;- timer(fwrite(df, "dataset.csv"))
+dtread  &lt;- timer(fread("dataset.csv"))
+
+#base
+
+basewrite &lt;- timer(write_rds(df, "dataset.rds"))
+baseread  &lt;- timer(read_rds("dataset.rds"))
+
+#feather
+
+featherwrite &lt;- timer(write_feather(df, "dataset.feather"))
+featherread  &lt;- timer(read_feather("dataset.feather"))
+```
+
+### Go to demo
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+(function() {
+  var i, text, code, codes = document.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+})();
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

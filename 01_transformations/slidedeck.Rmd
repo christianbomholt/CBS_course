@@ -1,0 +1,315 @@
+---
+title: 'R Course CBS <img src="./../img/PA.png" height="60" width="60"> '
+subtitle: " </br> Tranformation af data"
+author: "Christian Bomholt"
+date: "2019-02-14"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+library(readr)
+library(DT)
+shower <- function(df){
+  datatable(df %>% head(5), options = list(dom='tp'), rownames = F)
+}
+```
+
+
+---
+
+background-image: url("./../img/PA.png")
+background-size: 150px
+background-position: 90% 8%
+
+# Indhold af modul
+
+- Transformation af data med `dplyr`
+- En teknik kaldet `piping`
+- tidyr
+
+---
+
+class: inverse, middle
+
+# Transformation af data med `dplyr`
+
+---
+
+###  dplyr
+
+```{r}
+library(dplyr)
+```
+
+Pakken muliggør 
+- Valg af observationer baseret på deres værdi `(filter())`.
+- Sortér rækker baseret på værdi `(arrange())`.
+- Vælg variable / søjler baseret på navn `(select())`.
+- Lav nye variable som funktion af eksisterende variable `(mutate())`.
+- Kollaps mange værdier til et summary `(summarise())`.
+
+Disse kan bruges sammen med `group_by()` som ændrer hvordan hver af disse funktioner aggerer. Funktionerne vil operere gruppe-til-gruppe. Disse 6 funktioner vil være udsagnsordene i vores sprog når vi snakker data-manipulation.
+
+
+---
+
+### Tilføjelse af søjler
+
+```{r}
+avocados <- read_csv("../data/avocado.csv")[,-1]
+head(avocados %>% select(Date,AveragePrice, total_volume,region)) 
+avocados <- mutate(avocados, month = as.numeric(substr(Date,6,7))) 
+avocados <- mutate(avocados, day = as.numeric(substr(Date,9,10))) 
+```
+
+`mutate()` tager data som første argument og den nye søjle definition som andet argument.
+
+---
+
+### Filtrer søjler
+
+`filter()` tager data som første argument og derefter kan man indsætte så mange filtrerings krav man har list til
+
+```{r,eval=FALSE}
+filter(avocados, month == 1)
+filter(avocados, month == 1, day == 1)
+filter(avocados, month == 1, day == 1, year=2015)
+```
+
+---
+
+### Vælg søjler med `select()`
+
+`select()` tager data som første argument derefter søjle navne eller udtryk som ønskes.
+
+```{r,eval=FALSE}
+select(avocados, year, month, day)
+select(avocados, year:day)
+```
+
+Kan også bruges til at fravælge søjler:
+
+```{r,eval=FALSE}
+select(avocados, -(year:day))
+select(avocados, -day)
+```
+
+
+---
+
+### Sortering
+
+`arrange()` tager data som første argument og de søjler som skal sorteres efter.
+
+```{r}
+subset <- select(avocados,day,month,year,Date)
+arrange(avocados, year, month, day)[1:3,]
+```
+
+---
+
+### Omdøb søjler
+
+`rename()` tager data som første argument og det nye søjle-navn sat lig med det gamle.
+
+```{r}
+rename(avocados, average_price = AveragePrice)
+
+```
+
+---
+
+### Summarise data
+
+
+```{r}
+summarise(avocados, avgprice = mean(AveragePrice))
+```
+
+```{r}
+summarise(avocados, avgprice = mean(log(AveragePrice - 1-runif(1))))
+```
+
+
+```{r}
+summarise(avocados, avgp = mean(log(AveragePrice - 1-runif(1)),na.rm = T))
+```
+
+
+--- 
+
+
+### Grupper data med `group_by()`
+
+`group_by()` tager data som første argument og efterfølgende hvilke søjler der skal grupperes på.
+
+```{r}
+by_region <- group_by(avocados, region,year)
+summarise(by_region, avgprice = mean(AveragePrice, na.rm = TRUE))
+```
+
+---
+
+### Mere omfattende `groupby()`
+
+```{r}
+by_region <- group_by(avocados, region,year)
+region_stats <- summarise(by_region,
+                   count = n(),
+                   vol = mean(total_volume, na.rm = TRUE),
+                   prc = mean(AveragePrice, na.rm = TRUE)
+)
+region_stats <- filter(region_stats, count > 40, vol < 1e6)
+
+```
+
+```{r,echo=FALSE, fig.height=4}
+library(ggplot2)
+ggplot(data = region_stats, mapping = aes(x = vol, y = prc)) +
+  geom_point(aes(size = count), alpha = 1/3) +
+  geom_smooth(se = FALSE)
+```
+
+---
+
+class: inverse, middle
+
+# Exercise 1.1
+
+PApvin wants to throw a wine-tasting with french wines. Being a stellar host PApvin ofcourse want to ensure that the attendants are only offered wines of reasonable quality within expense range. Help out PApvin make the most of our budget. 
+
+- Use `dplyr` on the `winemag-data-130k-v2.csv.csv` to:
+  - Filter out all non-French wines
+  - group by title 
+  - create a column with average points
+  - print the top 6 wines
+  - Are these the wines you would choose? Try to improve top 6
+  
+```{r,eval=FALSE}
+library(readr)
+library(dplyr)
+wines <- read_csv("../data/winemag-data-130k-v2.csv")[,-1]
+```
+  
+  
+
+---
+
+# Piping
+
+Lader os gøre sammensatte funktioner let-læselige
+
+$$
+  f\circ g \,  \circ \, h(x) = f(g(h(x)))
+$$
+
+Med en smule forceret notation lader `piping` os skrive sammensatte funktioner som
+
+$$
+  x \circ h \, \circ g \, \circ f = f(g(h(x)))
+$$
+
+---
+
+### Nærmere sprolog semantik
+
+```{r,eval=FALSE}
+summarise(
+    filter(
+        mutate(avocados,revenue = AveragePrice*total_volume)
+        region != "Boston"
+    ),
+    avg_turnover = mean(revenue)
+)
+```
+
+
+```{r,eval=FALSE}
+avocados %>% filter(region!="Boston") %>% 
+    mutate(revenue = AveragePrice*total_volume) %>% 
+    summarise(avg_turnover = mean(revenue))
+```
+
+
+
+---
+
+## Færre tast for samme operation
+
+
+```{r,eval=F}
+avocados <- filter(avocados, region != "Boston")
+avocados <- mutate(avocados, revenue = AveragePrice*total_volume)
+avocados <- filter(avocados, year>2015)
+avocados <- filter(avocados, type=="conventional")
+avocados_grp <- group_by(avocados, region)
+summarise(avocados_grp, avg_turnover = mean(revenue))
+```
+
+kan udtrykkes som
+
+```{r,eval=FALSE}
+avocados  %>% filter(regio!="Boston")  %>%
+    mutate(revenue = AveragePrice*total_volume)  %>% 
+    filter(year>2015) %>% 
+    filter(type=="conventional")  %>% 
+    group_by(region) %>% 
+    summarise(avg_turnover = mean(revenue))
+```
+
+---
+
+class: inverse, middle
+
+# Opgave
+
+---
+class: inverse, middle
+
+
+## Exercise 1.2
+
+### Diamonds data filtering 
+
+PAntwerp wants you to help them find a good price estimate for a very particular batch of diamonds. The diamonds are characterized by having 
+
+- Ideal cut
+- Color D
+- Clearer than VVS2 [Very Very Slight Inclusions]
+    - Hint try the command `1:10 %in% c(1,3,5)` 
+- Carat less than 0.8
+- volume greater than 45
+
+$$
+ \text{Volume} = f(x,y,z) = x \cdot y \cdot z
+$$
+
+What price per carat can they expect for their batch? 
+
+```{r,eval=FALSE}
+diamonds <- ggplot2::diamonds
+```
+
+---
+
+```{r,echo=FALSE}
+diamonds <- ggplot2::diamonds
+diamonds_forplot <- diamonds %>%
+ mutate(volume = x * y *z) %>%
+ filter(volume <= quantile(volume, 0.99), volume > 0)
+
+ggplot(diamonds_forplot, aes(x = volume, y = price, color = clarity)) +
+ geom_point(alpha=1/20, size = 1) +
+ theme_minimal()
+```
+
+
+

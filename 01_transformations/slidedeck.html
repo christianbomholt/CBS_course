@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>R Practitioner</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Christian Bomholt" />
+    <meta name="date" content="2019-01-23" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# R Practitioner <img src="/home/christian/R/CBS_course/img/PA.png" height="60" width="60">
+## </br> Tranformation af data
+### Christian Bomholt
+### 2019-01-23
+
+---
+
+
+
+
+
+---
+
+background-image: url("./../img/PA.png")
+background-size: 150px
+background-position: 90% 8%
+
+# Indhold af modul
+
+- Transformation af data med `dplyr`
+- En teknik kaldet `piping`
+- tidyr
+
+---
+
+class: inverse, middle
+
+# Transformation af data med `dplyr`
+
+---
+
+###  dplyr
+
+
+```r
+library(dplyr)
+```
+
+Pakken muliggør 
+- Valg af observationer baseret på deres værdi `(filter())`.
+- Sortér rækker baseret på værdi `(arrange())`.
+- Vælg variable / søjler baseret på navn `(select())`.
+- Lav nye variable som funktion af eksisterende variable `(mutate())`.
+- Kollaps mange værdier til et summary `(summarise())`.
+
+Disse kan bruges sammen med `group_by()` som ændrer hvordan hver af disse funktioner aggerer. Funktionerne vil operere gruppe-til-gruppe. Disse 6 funktioner vil være udsagnsordene i vores sprog når vi snakker data-manipulation.
+
+
+---
+
+### Tilføjelse af søjler
+
+
+```r
+avocados &lt;- read_csv("../data/avocado.csv")[,-1]
+head(avocados %&gt;% select(Date,AveragePrice, total_volume,region)) 
+```
+
+```
+## # A tibble: 6 x 4
+##   Date       AveragePrice total_volume region
+##   &lt;date&gt;            &lt;dbl&gt;        &lt;dbl&gt; &lt;chr&gt; 
+## 1 2015-12-27         1.33       64237. Albany
+## 2 2015-12-20         1.35       54877. Albany
+## 3 2015-12-13         0.93      118220. Albany
+## 4 2015-12-06         1.08       78992. Albany
+## 5 2015-11-29         1.28       51040. Albany
+## 6 2015-11-22         1.26       55980. Albany
+```
+
+```r
+avocados &lt;- mutate(avocados, month = as.numeric(substr(Date,6,7))) 
+avocados &lt;- mutate(avocados, day = as.numeric(substr(Date,9,10))) 
+```
+
+`mutate()` tager data som første argument og den nye søjle definition som andet argument.
+
+---
+
+### Filtrer søjler
+
+`filter()` tager data som første argument og derefter kan man indsætte så mange filtrerings krav man har list til
+
+
+```r
+filter(avocados, month == 1)
+filter(avocados, month == 1, day == 1)
+filter(avocados, month == 1, day == 1, year=2015)
+```
+
+---
+
+### Vælg søjler med `select()`
+
+`select()` tager data som første argument derefter søjle navne eller udtryk som ønskes.
+
+
+```r
+select(avocados, year, month, day)
+select(avocados, year:day)
+```
+
+Kan også bruges til at fravælge søjler:
+
+
+```r
+select(avocados, -(year:day))
+select(avocados, -day)
+```
+
+
+---
+
+### Sortering
+
+`arrange()` tager data som første argument og de søjler som skal sorteres efter.
+
+
+```r
+subset &lt;- select(avocados,day,month,year,Date)
+arrange(avocados, year, month, day)[1:3,]
+```
+
+```
+## # A tibble: 3 x 15
+##   Date       AveragePrice total_volume `4046` `4225` `4770` `Total Bags`
+##   &lt;date&gt;            &lt;dbl&gt;        &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;        &lt;dbl&gt;
+## 1 2015-01-04         1.22       40873. 2.82e3 2.83e4 4.99e1        9716.
+## 2 2015-01-04         1         435021. 3.64e5 2.38e4 8.22e1       46816.
+## 3 2015-01-04         1.08      788025. 5.40e4 5.53e5 4.00e4      141137.
+## # ... with 8 more variables: `Small Bags` &lt;dbl&gt;, `Large Bags` &lt;dbl&gt;,
+## #   `XLarge Bags` &lt;dbl&gt;, type &lt;chr&gt;, year &lt;dbl&gt;, region &lt;chr&gt;,
+## #   month &lt;dbl&gt;, day &lt;dbl&gt;
+```
+
+---
+
+### Omdøb søjler
+
+`rename()` tager data som første argument og det nye søjle-navn sat lig med det gamle.
+
+
+```r
+rename(avocados, average_price = AveragePrice)
+```
+
+```
+## # A tibble: 18,249 x 15
+##    Date       average_price total_volume `4046` `4225` `4770` `Total Bags`
+##    &lt;date&gt;             &lt;dbl&gt;        &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;        &lt;dbl&gt;
+##  1 2015-12-27          1.33       64237.  1037. 5.45e4   48.2        8697.
+##  2 2015-12-20          1.35       54877.   674. 4.46e4   58.3        9506.
+##  3 2015-12-13          0.93      118220.   795. 1.09e5  130.         8145.
+##  4 2015-12-06          1.08       78992.  1132  7.20e4   72.6        5811.
+##  5 2015-11-29          1.28       51040.   941. 4.38e4   75.8        6184.
+##  6 2015-11-22          1.26       55980.  1184. 4.81e4   43.6        6684.
+##  7 2015-11-15          0.99       83454.  1369. 7.37e4   93.3        8319.
+##  8 2015-11-08          0.98      109428.   704. 1.02e5   80          6829.
+##  9 2015-11-01          1.02       99811.  1022. 8.73e4   85.3       11388.
+## 10 2015-10-25          1.07       74339.   842. 6.48e4  113          8626.
+## # ... with 18,239 more rows, and 8 more variables: `Small Bags` &lt;dbl&gt;,
+## #   `Large Bags` &lt;dbl&gt;, `XLarge Bags` &lt;dbl&gt;, type &lt;chr&gt;, year &lt;dbl&gt;,
+## #   region &lt;chr&gt;, month &lt;dbl&gt;, day &lt;dbl&gt;
+```
+
+---
+
+### Summarise data
+
+
+
+```r
+summarise(avocados, avgprice = mean(AveragePrice))
+```
+
+```
+## # A tibble: 1 x 1
+##   avgprice
+##      &lt;dbl&gt;
+## 1     1.41
+```
+
+
+```r
+summarise(avocados, avgprice = mean(log(AveragePrice - 1-runif(1))))
+```
+
+```
+## # A tibble: 1 x 1
+##   avgprice
+##      &lt;dbl&gt;
+## 1      NaN
+```
+
+
+
+```r
+summarise(avocados, avgp = mean(log(AveragePrice - 1-runif(1)),na.rm = T))
+```
+
+```
+## # A tibble: 1 x 1
+##    avgp
+##   &lt;dbl&gt;
+## 1 -1.89
+```
+
+
+--- 
+
+
+### Grupper data med `group_by()`
+
+`group_by()` tager data som første argument og efterfølgende hvilke søjler der skal grupperes på.
+
+
+```r
+by_region &lt;- group_by(avocados, region,year)
+summarise(by_region, avgprice = mean(AveragePrice, na.rm = TRUE))
+```
+
+```
+## # A tibble: 216 x 3
+## # Groups:   region [?]
+##    region               year avgprice
+##    &lt;chr&gt;               &lt;dbl&gt;    &lt;dbl&gt;
+##  1 Albany               2015     1.54
+##  2 Albany               2016     1.53
+##  3 Albany               2017     1.64
+##  4 Albany               2018     1.44
+##  5 Atlanta              2015     1.38
+##  6 Atlanta              2016     1.21
+##  7 Atlanta              2017     1.43
+##  8 Atlanta              2018     1.29
+##  9 BaltimoreWashington  2015     1.37
+## 10 BaltimoreWashington  2016     1.59
+## # ... with 206 more rows
+```
+
+---
+
+### Mere omfattende `groupby()`
+
+
+```r
+by_region &lt;- group_by(avocados, region,year)
+region_stats &lt;- summarise(by_region,
+                   count = n(),
+                   vol = mean(total_volume, na.rm = TRUE),
+                   prc = mean(AveragePrice, na.rm = TRUE)
+)
+region_stats &lt;- filter(region_stats, count &gt; 40, vol &lt; 1e6)
+```
+
+![](slidedeck_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
+
+---
+
+class: inverse, middle
+
+# Exercise 1.1
+
+PApvin wants to throw a wine-tasting with french wines. Being a stellar host PApvin ofcourse want to ensure that the attendants are only offered wines of reasonable quality within expense range. Help out PApvin make the most of our budget. 
+
+- Use `dplyr` on the `winemag-data-130k-v2.csv.csv` to:
+  - Filter out all non-French wines
+  - group by title 
+  - create a column with average points
+  - print the top 6 wines
+  - Are these the wines you would choose? Try to improve top 6
+  
+
+```r
+library(readr)
+library(dplyr)
+wines &lt;- read_csv("../data/winemag-data-130k-v2.csv")[,-1]
+```
+  
+  
+
+---
+
+# Piping
+
+Lader os gøre sammensatte funktioner let-læselige
+
+$$
+  f\circ g \,  \circ \, h(x) = f(g(h(x)))
+$$
+
+Med en smule forceret notation lader `piping` os skrive sammensatte funktioner som
+
+$$
+  x \circ h \, \circ g \, \circ f = f(g(h(x)))
+$$
+
+---
+
+### Nærmere sprolog semantik
+
+
+```r
+summarise(
+    filter(
+        mutate(avocados,revenue = AveragePrice*total_volume)
+        region != "Boston"
+    ),
+    avg_turnover = mean(revenue)
+)
+```
+
+
+
+```r
+avocados %&gt;% filter(region!="Boston") %&gt;% 
+    mutate(revenue = AveragePrice*total_volume) %&gt;% 
+    summarise(avg_turnover = mean(revenue))
+```
+
+
+
+---
+
+## Færre tast for samme operation
+
+
+
+```r
+avocados &lt;- filter(avocados, region != "Boston")
+avocados &lt;- mutate(avocados, revenue = AveragePrice*total_volume)
+avocados &lt;- filter(avocados, year&gt;2015)
+avocados &lt;- filter(avocados, type=="conventional")
+avocados_grp &lt;- group_by(avocados, region)
+summarise(avocados_grp, avg_turnover = mean(revenue))
+```
+
+kan udtrykkes som
+
+
+```r
+avocados  %&gt;% filter(regio!="Boston")  %&gt;%
+    mutate(revenue = AveragePrice*total_volume)  %&gt;% 
+    filter(year&gt;2015) %&gt;% 
+    filter(type=="conventional")  %&gt;% 
+    group_by(region) %&gt;% 
+    summarise(avg_turnover = mean(revenue))
+```
+
+---
+
+class: inverse, middle
+
+# Opgave
+
+---
+class: inverse, middle
+
+
+## Exercise 1.2
+
+### Diamonds data filtering 
+
+PAntwerp wants you to help them find a good price estimate for a very particular batch of diamonds. The diamonds are characterized by having 
+
+- Ideal cut
+- Color D
+- Clearer than VVS2 [Very Very Slight Inclusions]
+    - Hint try the command `1:10 %in% c(1,3,5)` 
+- Carat less than 0.8
+- volume greater than 45
+
+$$
+ \text{Volume} = f(x,y,z) = x \cdot y \cdot z
+$$
+
+What price per carat can they expect for their batch? 
+
+
+```r
+diamonds &lt;- ggplot2::diamonds
+```
+
+---
+
+![](slidedeck_files/figure-html/unnamed-chunk-20-1.png)&lt;!-- --&gt;
+    </textarea>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function() {
+  var d = document, s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+(function() {
+  var i, text, code, codes = document.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+})();
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
