@@ -5,3 +5,7 @@ packages <- c("tidyverse","plotly",
               "readr", "readxl", "openxlsx")
 
 install.packages(packages)
+
+library(readxl)
+read_excel("")
+
