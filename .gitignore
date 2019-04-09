@@ -6,3 +6,4 @@
 mod1/*.html
 mod1/*.Rmd
 mod1/*.R
+.Rproj.user
